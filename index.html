@@ -16,7 +16,23 @@
   <source src="music/Lover.mp3" type="audio/mp3">
 </audio>
 
-<script type="module" src="main.js?v=20"></script>
+<script>
+  const btn = document.getElementById("enterBtn");
+  const start = document.getElementById("startScreen");
+  const music = document.getElementById("bgMusic");
+
+  btn.onclick = () => {
+    music.volume = 0.4;
+    music.play();
+    start.style.display = "none";
+
+    // load the 3D world AFTER clicking
+    const script = document.createElement("script");
+    script.type = "module";
+    script.src = "main.js?v=30";
+    document.body.appendChild(script);
+  };
+</script>
 
 </body>
 </html>
