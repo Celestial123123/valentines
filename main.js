@@ -1,98 +1,80 @@
-// ================= ENTER + MUSIC =================
 const music = document.getElementById("bgMusic");
 const startScreen = document.getElementById("startScreen");
 const enterBtn = document.getElementById("enterBtn");
 
 enterBtn.addEventListener("click", () => {
-  music.volume = 0;
-  music.play().then(() => {
-    let v = 0;
-    const fade = setInterval(() => {
-      if (v < 0.4) { v += 0.02; music.volume = v; }
-      else clearInterval(fade);
-    }, 200);
-  });
+  music.volume = 0.4;
+  music.play();
   startScreen.style.display = "none";
 });
 
-// ================= SCENE =================
+// SCENE
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xffc0e6, 10, 120);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-camera.position.set(0,3,22);
+camera.position.set(0,3,20);
 
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth, innerHeight);
-renderer.setClearColor(0xffd6f2);
+renderer.setClearColor(0xffffff);
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff,1.3));
+scene.add(new THREE.AmbientLight(0xffffff,1.5));
 
-// ================= PLATFORM =================
+// PLATFORM
 const platform = new THREE.Mesh(
   new THREE.CylinderGeometry(8,8,1,32),
   new THREE.MeshStandardMaterial({color:0xff99cc})
 );
-platform.position.y = -2;
+platform.position.y=-2;
 scene.add(platform);
 
-// ================= HEART SHAPE =================
-function createHeartMesh(size=0.15,color=0xff4d88){
-  const x=0,y=0;
-  const heartShape = new THREE.Shape();
-  heartShape.moveTo(x+5,y+5);
-  heartShape.bezierCurveTo(x+5,y+5,x+4,y,x,y);
-  heartShape.bezierCurveTo(x-6,y,x-6,y+7,x-6,y+7);
-  heartShape.bezierCurveTo(x-6,y+11,x-3,y+15.4,x+5,y+19);
-  heartShape.bezierCurveTo(x+12,y+15.4,x+16,y+11,x+16,y+7);
-  heartShape.bezierCurveTo(x+16,y+7,x+16,y,x+10,y);
-  heartShape.bezierCurveTo(x+7,y,x+5,y+5,x+5,y+5);
-
-  const geo = new THREE.ShapeGeometry(heartShape);
-  const mat = new THREE.MeshBasicMaterial({color});
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.scale.set(size,size,size);
+// HEART SHAPE
+function heart(){
+  const shape=new THREE.Shape();
+  shape.moveTo(0,0);
+  shape.bezierCurveTo(0,3,-3,3,-3,0);
+  shape.bezierCurveTo(-3,-3,0,-5,0,-7);
+  shape.bezierCurveTo(0,-5,3,-3,3,0);
+  shape.bezierCurveTo(3,3,0,3,0,0);
+  const geo=new THREE.ShapeGeometry(shape);
+  const mat=new THREE.MeshBasicMaterial({color:0xff4d88});
+  const mesh=new THREE.Mesh(geo,mat);
+  mesh.scale.set(0.3,0.3,0.3);
   return mesh;
 }
 
-// ================= FLOATING HEARTS =================
 const hearts=[];
-for(let i=0;i<250;i++){
-  const h=createHeartMesh();
-  h.position.set((Math.random()-0.5)*60,Math.random()*25,(Math.random()-0.5)*60);
+for(let i=0;i<200;i++){
+  const h=heart();
+  h.position.set((Math.random()-0.5)*50,Math.random()*20,(Math.random()-0.5)*50);
   scene.add(h);
   hearts.push(h);
 }
 
-// ================= PHOTO CRYSTALS =================
-const loader = new THREE.TextureLoader();
+// PHOTOS
+const loader=new THREE.TextureLoader();
 const crystals=[];
-const totalPhotos=11;
-const radius=13;
+const radius=12;
 
-for(let i=1;i<=totalPhotos;i++){
-  const texture=loader.load(`./images/picture${i}.jpg`);
-
-  const crystal=new THREE.Mesh(
-    new THREE.PlaneGeometry(3,4),
-    new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide})
+for(let i=1;i<=11;i++){
+  const tex=loader.load(`./images/picture${i}.jpg`);
+  const mesh=new THREE.Mesh(
+    new THREE.PlaneGeometry(4,5),
+    new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide})
   );
-
-  const angle=(i/totalPhotos)*Math.PI*2;
-  crystal.position.set(Math.cos(angle)*radius,1,Math.sin(angle)*radius);
-  crystal.lookAt(0,1,0);
-  crystals.push(crystal);
-  scene.add(crystal);
+  const angle=(i/11)*Math.PI*2;
+  mesh.position.set(Math.cos(angle)*radius,1,Math.sin(angle)*radius);
+  mesh.lookAt(0,1,0);
+  scene.add(mesh);
+  crystals.push(mesh);
 }
 
-// ================= CINEMATIC CAMERA ZOOM =================
+// CAMERA ZOOM
 const raycaster=new THREE.Raycaster();
 const mouse=new THREE.Vector2();
-
-let isZoomed=false;
-let originalCamPos=new THREE.Vector3();
-let originalLook=new THREE.Vector3();
+let zoom=false;
+let original=new THREE.Vector3();
 
 window.addEventListener("click",(e)=>{
   mouse.x=(e.clientX/innerWidth)*2-1;
@@ -101,41 +83,23 @@ window.addEventListener("click",(e)=>{
 
   const hit=raycaster.intersectObjects(crystals);
 
-  if(isZoomed){
-    camera.position.copy(originalCamPos);
-    camera.lookAt(originalLook);
-    isZoomed=false;
+  if(zoom){
+    camera.position.copy(original);
+    camera.lookAt(0,1,0);
+    zoom=false;
     return;
   }
 
   if(hit.length>0){
-    const obj=hit[0].object;
-    originalCamPos.copy(camera.position);
-    originalLook.set(0,1,0);
-
-    const pos=obj.position.clone();
-    camera.position.set(pos.x*0.6, pos.y+1.5, pos.z*0.6);
-    camera.lookAt(obj.position);
-    isZoomed=true;
+    original.copy(camera.position);
+    const p=hit[0].object.position;
+    camera.position.set(p.x*0.6,p.y+1.5,p.z*0.6);
+    camera.lookAt(p);
+    zoom=true;
   }
 });
 
-// ================= LETTER =================
-function showLetter(){
-  const div=document.createElement("div");
-  div.innerHTML=`
-  <div style="
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  background:white;padding:30px;border-radius:20px;
-  width:60%;text-align:center;z-index:50;font-family:serif;">
-  <h2>My Love ❤️</h2>
-  <p>You make my world magical. Every memory with you means everything to me.</p>
-  <button onclick="this.parentElement.remove()">Close</button>
-  </div>`;
-  document.body.appendChild(div);
-}
-
-// ================= ANIMATION =================
+// ANIMATE
 let t=0;
 function animate(){
   requestAnimationFrame(animate);
@@ -143,11 +107,12 @@ function animate(){
 
   hearts.forEach((h,i)=>{
     h.position.y+=Math.sin(t+i)*0.02;
-    h.rotation.z+=0.02;
   });
 
-  camera.position.y=Math.sin(t)*0.4+3;
-  if(!isZoomed) camera.lookAt(0,1,0);
+  if(!zoom){
+    camera.position.y=Math.sin(t)*0.4+3;
+    camera.lookAt(0,1,0);
+  }
 
   renderer.render(scene,camera);
 }
