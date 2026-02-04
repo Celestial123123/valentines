@@ -1,12 +1,12 @@
-import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
 camera.position.set(0,4,18);
 
 const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth, innerHeight);
+renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0xfff5fa);
 document.body.appendChild(renderer.domElement);
 
@@ -18,7 +18,6 @@ scene.add(new THREE.AmbientLight(0xffffff, 1.5));
 
 // PHOTO CAROUSEL
 const loader = new THREE.TextureLoader();
-const photos = [];
 const radius = 10;
 
 for(let i=1;i<=11;i++){
@@ -33,7 +32,6 @@ for(let i=1;i<=11;i++){
   plane.lookAt(0,2,0);
 
   scene.add(plane);
-  photos.push(plane);
 }
 
 function animate(){
@@ -44,7 +42,7 @@ function animate(){
 animate();
 
 window.addEventListener("resize",()=>{
-  camera.aspect = innerWidth/innerHeight;
+  camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
+  renderer.setSize(window.innerWidth, window.innerHeight);
 });
