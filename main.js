@@ -10,110 +10,106 @@ enterBtn.addEventListener("click", () => {
 
 // SCENE
 const scene = new THREE.Scene();
-
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-camera.position.set(0,3,20);
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
+camera.position.set(0, 4, 18);
 
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth, innerHeight);
-renderer.setClearColor(0xffffff);
+renderer.setClearColor(0xfff5fa);
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff,1.5));
+// CONTROLS (spin around)
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.8;
+controls.enablePan = false;
 
-// PLATFORM
-const platform = new THREE.Mesh(
-  new THREE.CylinderGeometry(8,8,1,32),
-  new THREE.MeshStandardMaterial({color:0xff99cc})
-);
-platform.position.y=-2;
-scene.add(platform);
+// LIGHT
+scene.add(new THREE.AmbientLight(0xffffff, 1.5));
 
-// HEART SHAPE
-function heart(){
-  const shape=new THREE.Shape();
-  shape.moveTo(0,0);
-  shape.bezierCurveTo(0,3,-3,3,-3,0);
-  shape.bezierCurveTo(-3,-3,0,-5,0,-7);
-  shape.bezierCurveTo(0,-5,3,-3,3,0);
-  shape.bezierCurveTo(3,3,0,3,0,0);
-  const geo=new THREE.ShapeGeometry(shape);
-  const mat=new THREE.MeshBasicMaterial({color:0xff4d88});
-  const mesh=new THREE.Mesh(geo,mat);
+// HEART PARTICLES
+function heartShape(){
+  const s=new THREE.Shape();
+  s.moveTo(0,0);
+  s.bezierCurveTo(0,2,-2,2,-2,0);
+  s.bezierCurveTo(-2,-2,0,-3,0,-4);
+  s.bezierCurveTo(0,-3,2,-2,2,0);
+  s.bezierCurveTo(2,2,0,2,0,0);
+  const g=new THREE.ShapeGeometry(s);
+  const m=new THREE.MeshBasicMaterial({color:0xff6b9e});
+  const mesh=new THREE.Mesh(g,m);
   mesh.scale.set(0.3,0.3,0.3);
   return mesh;
 }
 
 const hearts=[];
-for(let i=0;i<200;i++){
-  const h=heart();
-  h.position.set((Math.random()-0.5)*50,Math.random()*20,(Math.random()-0.5)*50);
+for(let i=0;i<150;i++){
+  const h=heartShape();
+  h.position.set((Math.random()-0.5)*40,Math.random()*15,(Math.random()-0.5)*40);
   scene.add(h);
   hearts.push(h);
 }
 
-// PHOTOS
+// PHOTO CAROUSEL
 const loader=new THREE.TextureLoader();
-const crystals=[];
-const radius=12;
+const photos=[];
+const radius=10;
+const total=11;
 
-for(let i=1;i<=11;i++){
+for(let i=1;i<=total;i++){
   const tex=loader.load(`./images/picture${i}.jpg`);
-  const mesh=new THREE.Mesh(
+  const plane=new THREE.Mesh(
     new THREE.PlaneGeometry(4,5),
-    new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide})
+    new THREE.MeshBasicMaterial({map:tex, side:THREE.DoubleSide})
   );
-  const angle=(i/11)*Math.PI*2;
-  mesh.position.set(Math.cos(angle)*radius,1,Math.sin(angle)*radius);
-  mesh.lookAt(0,1,0);
-  scene.add(mesh);
-  crystals.push(mesh);
+
+  const angle=(i/total)*Math.PI*2;
+  plane.position.set(Math.cos(angle)*radius,2,Math.sin(angle)*radius);
+  plane.lookAt(0,2,0);
+
+  scene.add(plane);
+  photos.push(plane);
 }
 
-// CAMERA ZOOM
+// CLICK TO ZOOM
 const raycaster=new THREE.Raycaster();
 const mouse=new THREE.Vector2();
-let zoom=false;
-let original=new THREE.Vector3();
+let zoomed=false;
+let savedPos=new THREE.Vector3();
 
 window.addEventListener("click",(e)=>{
   mouse.x=(e.clientX/innerWidth)*2-1;
   mouse.y=-(e.clientY/innerHeight)*2+1;
   raycaster.setFromCamera(mouse,camera);
+  const hit=raycaster.intersectObjects(photos);
 
-  const hit=raycaster.intersectObjects(crystals);
-
-  if(zoom){
-    camera.position.copy(original);
-    camera.lookAt(0,1,0);
-    zoom=false;
+  if(zoomed){
+    camera.position.copy(savedPos);
+    controls.enabled=true;
+    zoomed=false;
     return;
   }
 
   if(hit.length>0){
-    original.copy(camera.position);
+    savedPos.copy(camera.position);
     const p=hit[0].object.position;
-    camera.position.set(p.x*0.6,p.y+1.5,p.z*0.6);
+    camera.position.set(p.x*0.6, p.y+1.5, p.z*0.6);
     camera.lookAt(p);
-    zoom=true;
+    controls.enabled=false;
+    zoomed=true;
   }
 });
 
-// ANIMATE
-let t=0;
+// ANIMATION
 function animate(){
   requestAnimationFrame(animate);
-  t+=0.01;
 
   hearts.forEach((h,i)=>{
-    h.position.y+=Math.sin(t+i)*0.02;
+    h.position.y+=Math.sin(Date.now()*0.001+i)*0.01;
   });
 
-  if(!zoom){
-    camera.position.y=Math.sin(t)*0.4+3;
-    camera.lookAt(0,1,0);
-  }
-
+  controls.update();
   renderer.render(scene,camera);
 }
 animate();
