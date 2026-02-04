@@ -1,4 +1,4 @@
-// ================= MUSIC + ENTER =================
+// ================= ENTER + MUSIC =================
 const music = document.getElementById("bgMusic");
 const startScreen = document.getElementById("startScreen");
 const enterBtn = document.getElementById("enterBtn");
@@ -8,10 +8,8 @@ enterBtn.addEventListener("click", () => {
   music.play().then(() => {
     let v = 0;
     const fade = setInterval(() => {
-      if (v < 0.4) {
-        v += 0.02;
-        music.volume = v;
-      } else clearInterval(fade);
+      if (v < 0.4) { v += 0.02; music.volume = v; }
+      else clearInterval(fade);
     }, 200);
   });
   startScreen.style.display = "none";
@@ -19,159 +17,122 @@ enterBtn.addEventListener("click", () => {
 
 // ================= SCENE =================
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xffc0e6, 8, 100);
+scene.fog = new THREE.Fog(0xffc0e6, 10, 120);
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.set(0, 2, 18);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+camera.position.set(0,3,22);
 
 const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(innerWidth, innerHeight);
 renderer.setClearColor(0xffd6f2);
 document.body.appendChild(renderer.domElement);
 
-// ================= LIGHT =================
-scene.add(new THREE.AmbientLight(0xffcce6, 1.4));
-const light = new THREE.PointLight(0xffffff, 2);
-light.position.set(10,10,10);
-scene.add(light);
+scene.add(new THREE.AmbientLight(0xffffff,1.3));
 
 // ================= PLATFORM =================
 const platform = new THREE.Mesh(
-  new THREE.CylinderGeometry(7,7,1,32),
+  new THREE.CylinderGeometry(8,8,1,32),
   new THREE.MeshStandardMaterial({color:0xff99cc})
 );
 platform.position.y = -2;
 scene.add(platform);
 
+// ================= HEART SHAPE =================
+function createHeartMesh(size=0.15,color=0xff4d88){
+  const x=0,y=0;
+  const heartShape = new THREE.Shape();
+  heartShape.moveTo(x+5,y+5);
+  heartShape.bezierCurveTo(x+5,y+5,x+4,y,x,y);
+  heartShape.bezierCurveTo(x-6,y,x-6,y+7,x-6,y+7);
+  heartShape.bezierCurveTo(x-6,y+11,x-3,y+15.4,x+5,y+19);
+  heartShape.bezierCurveTo(x+12,y+15.4,x+16,y+11,x+16,y+7);
+  heartShape.bezierCurveTo(x+16,y+7,x+16,y,x+10,y);
+  heartShape.bezierCurveTo(x+7,y,x+5,y+5,x+5,y+5);
+
+  const geo = new THREE.ShapeGeometry(heartShape);
+  const mat = new THREE.MeshBasicMaterial({color});
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.scale.set(size,size,size);
+  return mesh;
+}
+
 // ================= FLOATING HEARTS =================
-const hearts = [];
+const hearts=[];
 for(let i=0;i<250;i++){
-  const h = new THREE.Mesh(
-    new THREE.SphereGeometry(0.12,8,8),
-    new THREE.MeshBasicMaterial({color:0xff69b4})
-  );
-  h.position.set((Math.random()-0.5)*40, Math.random()*20, (Math.random()-0.5)*40);
-  hearts.push(h);
+  const h=createHeartMesh();
+  h.position.set((Math.random()-0.5)*60,Math.random()*25,(Math.random()-0.5)*60);
   scene.add(h);
+  hearts.push(h);
 }
 
 // ================= PHOTO CRYSTALS =================
 const loader = new THREE.TextureLoader();
-const crystals = [];
-const totalPhotos = 11;
-const radius = 11;
+const crystals=[];
+const totalPhotos=11;
+const radius=13;
 
 for(let i=1;i<=totalPhotos;i++){
-  const texture = loader.load(`./images/picture${i}.jpg`);
+  const texture=loader.load(`./images/picture${i}.jpg`);
 
-  const crystal = new THREE.Mesh(
-    new THREE.BoxGeometry(2.3,3.3,0.2),
-    new THREE.MeshStandardMaterial({
-      map:texture,
-      emissive:0xff99cc,
-      emissiveIntensity:0.6
-    })
+  const crystal=new THREE.Mesh(
+    new THREE.PlaneGeometry(3,4),
+    new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide})
   );
 
-  const angle = (i/totalPhotos)*Math.PI*2;
-  crystal.position.set(Math.cos(angle)*radius, 0, Math.sin(angle)*radius);
-  crystal.lookAt(0,0,0);
-  crystal.userData.originalPosition = crystal.position.clone();
-
+  const angle=(i/totalPhotos)*Math.PI*2;
+  crystal.position.set(Math.cos(angle)*radius,1,Math.sin(angle)*radius);
+  crystal.lookAt(0,1,0);
   crystals.push(crystal);
   scene.add(crystal);
 }
 
-// ================= LETTER PEDESTAL =================
-const letter = new THREE.Mesh(
-  new THREE.CylinderGeometry(1.2,1.2,0.5,32),
-  new THREE.MeshStandardMaterial({color:0xffffff, emissive:0xff99cc})
-);
-letter.position.set(0,0,0);
-scene.add(letter);
+// ================= CINEMATIC CAMERA ZOOM =================
+const raycaster=new THREE.Raycaster();
+const mouse=new THREE.Vector2();
 
-// ================= GIFT BOX =================
-const gift = new THREE.Mesh(
-  new THREE.BoxGeometry(1.5,1.5,1.5),
-  new THREE.MeshStandardMaterial({color:0xff66aa})
-);
-gift.position.set(0,1.5,-5);
-scene.add(gift);
+let isZoomed=false;
+let originalCamPos=new THREE.Vector3();
+let originalLook=new THREE.Vector3();
 
-// ================= RAYCAST CLICK =================
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-let zoomed = null;
+window.addEventListener("click",(e)=>{
+  mouse.x=(e.clientX/innerWidth)*2-1;
+  mouse.y=-(e.clientY/innerHeight)*2+1;
+  raycaster.setFromCamera(mouse,camera);
 
-window.addEventListener("click", (event)=>{
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
+  const hit=raycaster.intersectObjects(crystals);
 
-  const intersects = raycaster.intersectObjects([...crystals, letter, gift]);
-
-  if(zoomed){
-    zoomed.position.copy(zoomed.userData.originalPosition);
-    zoomed.scale.set(1,1,1);
-    zoomed = null;
+  if(isZoomed){
+    camera.position.copy(originalCamPos);
+    camera.lookAt(originalLook);
+    isZoomed=false;
     return;
   }
 
-  if(intersects.length>0){
-    const obj = intersects[0].object;
+  if(hit.length>0){
+    const obj=hit[0].object;
+    originalCamPos.copy(camera.position);
+    originalLook.set(0,1,0);
 
-    // PHOTO
-    if(crystals.includes(obj)){
-      zoomed = obj;
-      obj.position.set(0,1,4);
-      obj.scale.set(3,3,3);
-    }
-
-    // LETTER
-    if(obj === letter){
-      showLetter();
-    }
-
-    // GIFT
-    if(obj === gift){
-      explodeHearts();
-    }
+    const pos=obj.position.clone();
+    camera.position.set(pos.x*0.6, pos.y+1.5, pos.z*0.6);
+    camera.lookAt(obj.position);
+    isZoomed=true;
   }
 });
 
-// ================= LETTER POPUP =================
+// ================= LETTER =================
 function showLetter(){
-  const div = document.createElement("div");
-  div.innerHTML = `
+  const div=document.createElement("div");
+  div.innerHTML=`
   <div style="
-    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-    background:white;padding:30px;border-radius:20px;
-    font-family:serif;width:60%;text-align:center;z-index:50;">
-    <h2>My Love ❤️</h2>
-    <p>Thank you for being in my life. Every moment with you is magical...</p>
-    <button onclick="this.parentElement.remove()">Close</button>
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:white;padding:30px;border-radius:20px;
+  width:60%;text-align:center;z-index:50;font-family:serif;">
+  <h2>My Love ❤️</h2>
+  <p>You make my world magical. Every memory with you means everything to me.</p>
+  <button onclick="this.parentElement.remove()">Close</button>
   </div>`;
   document.body.appendChild(div);
-}
-
-// ================= HEART EXPLOSION =================
-function explodeHearts(){
-  for(let i=0;i<50;i++){
-    const h = new THREE.Mesh(
-      new THREE.SphereGeometry(0.15,8,8),
-      new THREE.MeshBasicMaterial({color:0xff0000})
-    );
-    h.position.copy(gift.position);
-    scene.add(h);
-
-    const dir = new THREE.Vector3(
-      (Math.random()-0.5)*0.5,
-      Math.random()*0.5,
-      (Math.random()-0.5)*0.5
-    );
-
-    setInterval(()=>{ h.position.add(dir); },30);
-  }
 }
 
 // ================= ANIMATION =================
@@ -180,27 +141,20 @@ function animate(){
   requestAnimationFrame(animate);
   t+=0.01;
 
-  crystals.forEach(c=>{
-    if(c!==zoomed) c.rotation.y+=0.01;
-  });
-
-  gift.rotation.y+=0.02;
-  letter.rotation.y+=0.01;
-
   hearts.forEach((h,i)=>{
-    h.position.y+=Math.sin(t+i)*0.01;
+    h.position.y+=Math.sin(t+i)*0.02;
+    h.rotation.z+=0.02;
   });
 
-  camera.position.y = Math.sin(t)*0.4 + 2;
-  camera.lookAt(0,0,0);
+  camera.position.y=Math.sin(t)*0.4+3;
+  if(!isZoomed) camera.lookAt(0,1,0);
 
   renderer.render(scene,camera);
 }
 animate();
 
-// ================= RESIZE =================
 window.addEventListener("resize",()=>{
-  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(innerWidth,innerHeight);
 });
