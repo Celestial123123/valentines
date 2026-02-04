@@ -1,3 +1,8 @@
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+
+window.addEventListener("DOMContentLoaded", () => {
+
 const music = document.getElementById("bgMusic");
 const startScreen = document.getElementById("startScreen");
 const enterBtn = document.getElementById("enterBtn");
@@ -12,28 +17,27 @@ enterBtn.onclick = () => {
 function startWorld(){
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
 camera.position.set(0,4,18);
 
 const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0xffffff);
+renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0xfff5fa);
 document.body.appendChild(renderer.domElement);
 
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.autoRotate = true;
-controls.autoRotateSpeed = 0.8;
 
 scene.add(new THREE.AmbientLight(0xffffff, 1.5));
 
 // PHOTO CAROUSEL
 const loader = new THREE.TextureLoader();
-const photos = [];
 const radius = 10;
+const photos = [];
 
 for(let i=1;i<=11;i++){
-  const tex = loader.load(`images/picture${i}.jpg`);
+  const tex = loader.load(`./images/picture${i}.jpg`);
   const plane = new THREE.Mesh(
     new THREE.PlaneGeometry(4,5),
     new THREE.MeshBasicMaterial({map:tex, side:THREE.DoubleSide})
@@ -54,8 +58,8 @@ let zoomed = false;
 let originalPos = new THREE.Vector3();
 
 window.addEventListener("click", (e)=>{
-  mouse.x = (e.clientX/window.innerWidth)*2-1;
-  mouse.y = -(e.clientY/window.innerHeight)*2+1;
+  mouse.x = (e.clientX/innerWidth)*2-1;
+  mouse.y = -(e.clientY/innerHeight)*2+1;
   raycaster.setFromCamera(mouse,camera);
 
   const hit = raycaster.intersectObjects(photos);
@@ -85,9 +89,11 @@ function animate(){
 animate();
 
 window.addEventListener("resize",()=>{
-  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.aspect = innerWidth/innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(innerWidth, innerHeight);
 });
 
 }
+
+});
