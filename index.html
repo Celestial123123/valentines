@@ -16,24 +16,9 @@
   <source src="music/Lover.mp3" type="audio/mp3">
 </audio>
 
-<script>
-  const btn = document.getElementById("enterBtn");
-  const start = document.getElementById("startScreen");
-  const music = document.getElementById("bgMusic");
-
-  btn.onclick = () => {
-    music.volume = 0.4;
-    music.play();
-    start.style.display = "none";
-
-    // load the 3D world AFTER clicking
-    const script = document.createElement("script");
-    script.type = "module";
-    script.src = "world.js";
-    document.body.appendChild(script);
-  };
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r149/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="world.js?v=200"></script>
 
 </body>
 </html>
-
