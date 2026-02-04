@@ -1,21 +1,6 @@
 import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 
-window.addEventListener("DOMContentLoaded", () => {
-
-const music = document.getElementById("bgMusic");
-const startScreen = document.getElementById("startScreen");
-const enterBtn = document.getElementById("enterBtn");
-
-enterBtn.onclick = () => {
-  music.volume = 0.4;
-  music.play();
-  startScreen.style.display = "none";
-  startWorld();
-};
-
-function startWorld(){
-
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
 camera.position.set(0,4,18);
@@ -33,8 +18,8 @@ scene.add(new THREE.AmbientLight(0xffffff, 1.5));
 
 // PHOTO CAROUSEL
 const loader = new THREE.TextureLoader();
-const radius = 10;
 const photos = [];
+const radius = 10;
 
 for(let i=1;i<=11;i++){
   const tex = loader.load(`./images/picture${i}.jpg`);
@@ -51,36 +36,6 @@ for(let i=1;i<=11;i++){
   photos.push(plane);
 }
 
-// CLICK TO ZOOM
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-let zoomed = false;
-let originalPos = new THREE.Vector3();
-
-window.addEventListener("click", (e)=>{
-  mouse.x = (e.clientX/innerWidth)*2-1;
-  mouse.y = -(e.clientY/innerHeight)*2+1;
-  raycaster.setFromCamera(mouse,camera);
-
-  const hit = raycaster.intersectObjects(photos);
-
-  if(zoomed){
-    camera.position.copy(originalPos);
-    controls.enabled = true;
-    zoomed = false;
-    return;
-  }
-
-  if(hit.length>0){
-    originalPos.copy(camera.position);
-    const p = hit[0].object.position;
-    camera.position.set(p.x*0.6, p.y+1.5, p.z*0.6);
-    camera.lookAt(p);
-    controls.enabled = false;
-    zoomed = true;
-  }
-});
-
 function animate(){
   requestAnimationFrame(animate);
   controls.update();
@@ -92,8 +47,4 @@ window.addEventListener("resize",()=>{
   camera.aspect = innerWidth/innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
-});
-
-}
-
 });
