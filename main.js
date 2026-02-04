@@ -1,6 +1,8 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 
+window.addEventListener("DOMContentLoaded", () => {
+
 const music = document.getElementById("bgMusic");
 const startScreen = document.getElementById("startScreen");
 const enterBtn = document.getElementById("enterBtn");
@@ -10,6 +12,7 @@ enterBtn.addEventListener("click", () => {
   music.play();
   startScreen.style.display = "none";
 });
+
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
@@ -59,3 +62,8 @@ window.addEventListener("resize",()=>{
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
+  });
+
+
+
+
